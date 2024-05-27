@@ -1,4 +1,3 @@
--- Core.lua
 local addonName, addonTable = ...
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
@@ -12,6 +11,9 @@ local minimapMarkers = {}
 local worldMapMarkers = {}
 local pendingMarker = {}
 
+-- Define the show flag for the world map
+local HBD_PINS_WORLDMAP_SHOW_WORLD = 1
+
 -- SavedVariables
 HambrosiasSurveyHelperDB = HambrosiasSurveyHelperDB or {}
 
@@ -24,6 +26,9 @@ frame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         local unit, castGUID, spellID = ...
         if unit == "player" and spellID == SURVEY_SPELL_ID then
+            if addonTable.colorSelectionFrame and addonTable.colorSelectionFrame:IsShown() then
+                addonTable.colorSelectionFrame:Hide()
+            end
             ShowColorSelectionUI()
         end
     end
@@ -122,7 +127,8 @@ function PlaceMarkerOnWorldMap(uiMapID, x, y, color, id)
     icon.texture = texture
 
     worldMapMarkers[id] = icon
-    HBDPins:AddWorldMapIconMap(addonName, icon, uiMapID, x, y, true)
+    -- Correct the showFlag parameter to be a number
+    HBDPins:AddWorldMapIconMap(addonName, icon, uiMapID, x, y, HBD_PINS_WORLDMAP_SHOW_WORLD)
 end
 
 function EncodeLoc(x, y)
