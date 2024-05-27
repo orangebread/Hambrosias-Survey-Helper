@@ -1,0 +1,19 @@
+<!-- HambrosiasSurveyHelper.xml -->
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Frame name="HambrosiasSurveyHelperFrame" hidden="true">
+        <Scripts>
+            <OnLoad>
+                self:RegisterForDrag("LeftButton")
+            </OnLoad>
+        </Scripts>
+        <Frames>
+            <Button name="PlaceMarkerButton" text="Place Marker" size="80,22">
+                <Scripts>
+                    <OnClick>
+                        PlaceMarker(C_Map.GetBestMapForUnit("player"), C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player"):GetXY(), "Interface\\Icons\\INV_Misc_Map_01", "My Marker")
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+    </Frame>
+</Ui>

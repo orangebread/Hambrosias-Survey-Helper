@@ -1,0 +1,12 @@
+## Interface: 100105
+## Title: Hambrosia's Survey Helper
+## Notes: An addon to assist with triangulating the position of buried treasures
+## Author: YourName
+## Version: 1.0
+
+# Deps
+Libs\HereBeDragons\HereBeDragons-2.0.lua
+Libs\HereBeDragons\HereBeDragons-Migrate.lua
+
+# Files
+HambrosiasSurveyHelper.lua
