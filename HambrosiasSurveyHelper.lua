@@ -140,52 +140,6 @@ function PlaceMarker(uiMapID, x, y, color)
     print("Placed marker on minimap and world map at:", x, y, "with color", color)
 end
 
-local function CreateCircularIcon(parent, mapID, x, y, color, size, showMinimap, showWorldMap)
-    -- Create a new frame
-    local iconFrame = CreateFrame("Frame", nil, parent)
-    iconFrame:SetSize(size, size)
-
-    -- Create the texture for the icon
-    local texture = iconFrame:CreateTexture(nil, "ARTWORK")
-    texture:SetAllPoints(iconFrame)
-    texture:SetColorTexture(unpack(color))
-
-    -- Set the circular mask
-    iconFrame:SetMask([[Interface\Minimap\UI-Minimap-Background]])
-
-    -- Set up the icon for the minimap
-    local minimapIcon = CreateFrame("Button", nil, Minimap)
-    minimapIcon:SetAllPoints(iconFrame)
-    minimapIcon.icon = iconFrame
-    minimapIcon:SetScript("OnEnter", function(self)
-        -- Add your OnEnter logic here
-    end)
-    minimapIcon:SetScript("OnLeave", function(self)
-        -- Add your OnLeave logic here
-    end)
-
-    if showMinimap then
-        hbdp:AddMinimapIconMap(addon_name, minimapIcon, mapID, x, y, true, true)
-    end
-
-    -- Set up the icon for the world map
-    local worldMapIcon = CreateFrame("Button", nil, WorldMapFrame)
-    worldMapIcon:SetAllPoints(iconFrame)
-    worldMapIcon.icon = iconFrame
-    worldMapIcon:SetScript("OnEnter", function(self)
-        -- Add your OnEnter logic here
-    end)
-    worldMapIcon:SetScript("OnLeave", function(self)
-        -- Add your OnLeave logic here
-    end)
-
-    if showWorldMap then
-        hbdp:AddWorldMapIconMap(addon_name, worldMapIcon, mapID, x, y, HBD_PINS_WORLDMAP_SHOW_WORLD)
-    end
-
-    return iconFrame, minimapIcon, worldMapIcon
-end
-
 function PlaceMarkerOnMinimap(uiMapID, x, y, color, id)
     local icon = CreateFrame("Frame", nil, Minimap)
     icon:SetSize(12, 12)
