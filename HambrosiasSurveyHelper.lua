@@ -8,6 +8,7 @@ local HBD = LibStub("HereBeDragons-2.0")
 local HBDPins = LibStub("HereBeDragons-Pins-2.0")
 
 local SURVEY_SPELL_ID = 80451  -- Spell ID for Survey
+local LOOT_ARTIFACT_ID = 73979  -- Artifact ID for loot
 local minimapMarkers = {}
 local worldMapMarkers = {}
 local pendingMarker = {}
@@ -15,32 +16,39 @@ local pendingMarker = {}
 -- Define the show flag for the world map
 local HBD_PINS_WORLDMAP_SHOW_WORLD = 1
 
+-- Artifact found flag
+local isFound = false
+
 -- SavedVariables
 HambrosiasSurveyHelperDB = HambrosiasSurveyHelperDB or {}
+HambrosiasSurveyHelperDB.soundEnabled = HambrosiasSurveyHelperDB.soundEnabled or true
 
 -- Sound effect for artifact discovery
 local ARTIFACT_DISCOVERY_SOUND = [[Interface\AddOns\HambrosiasSurveyHelper\museum.mp3]]
 
 -- Initialization
 frame:SetScript("OnEvent", function(self, event, ...)
+    local unit, castGUID, spellID = ...
+
     if event == "ADDON_LOADED" and ... == addonName then
-        LoadMarkers()
+        -- LoadMarkers()
         CreateOptionsMenu()
         print("Hambrosia's Survey Helper Loaded")
     elseif event == "ARCHAEOLOGY_FIND_COMPLETE" then
-        addonTable.colorSelectionFrame:Hide()
+        isFound = true
+        if addonTable.colorSelectionFrame and addonTable.colorSelectionFrame:IsShown() then
+            addonTable.colorSelectionFrame:Hide()
+        end
         ClearMarkers()
         ShowArtifactDiscoveredOverlay()
         print("|cFFFFFF00Artifact discovered!|r")  -- Display bright yellow text
-        PlaySound(ARTIFACT_DISCOVERY_SOUND)  -- Play the sound effect
-    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local unit, castGUID, spellID = ...
-        if unit == "player" and spellID == SURVEY_SPELL_ID then
-            if addonTable.colorSelectionFrame and addonTable.colorSelectionFrame:IsShown() then
-                addonTable.colorSelectionFrame:Hide()
-            end
-            ShowColorSelectionUI()
+        if HambrosiasSurveyHelperDB.soundEnabled then
+            PlaySoundFile(ARTIFACT_DISCOVERY_SOUND, "Master", false, false)  -- Play the sound effect
         end
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" and spellID == SURVEY_SPELL_ID and  unit == "player" and not isFound then
+        ShowColorSelectionUI()
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" and spellID == LOOT_ARTIFACT_ID then
+        isFound = false
     end
 end)
 
@@ -52,7 +60,7 @@ end
 function ShowArtifactDiscoveredOverlay()
     if not artifactDiscoveredFrame then
         artifactDiscoveredFrame = CreateFrame("Frame", nil, UIParent)
-        artifactDiscoveredFrame:SetPoint("CENTER")
+        artifactDiscoveredFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
         artifactDiscoveredFrame:SetSize(500, 200)  -- Increased frame size
 
         local text = artifactDiscoveredFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")  -- Larger font
@@ -132,6 +140,52 @@ function PlaceMarker(uiMapID, x, y, color)
     print("Placed marker on minimap and world map at:", x, y, "with color", color)
 end
 
+local function CreateCircularIcon(parent, mapID, x, y, color, size, showMinimap, showWorldMap)
+    -- Create a new frame
+    local iconFrame = CreateFrame("Frame", nil, parent)
+    iconFrame:SetSize(size, size)
+
+    -- Create the texture for the icon
+    local texture = iconFrame:CreateTexture(nil, "ARTWORK")
+    texture:SetAllPoints(iconFrame)
+    texture:SetColorTexture(unpack(color))
+
+    -- Set the circular mask
+    iconFrame:SetMask([[Interface\Minimap\UI-Minimap-Background]])
+
+    -- Set up the icon for the minimap
+    local minimapIcon = CreateFrame("Button", nil, Minimap)
+    minimapIcon:SetAllPoints(iconFrame)
+    minimapIcon.icon = iconFrame
+    minimapIcon:SetScript("OnEnter", function(self)
+        -- Add your OnEnter logic here
+    end)
+    minimapIcon:SetScript("OnLeave", function(self)
+        -- Add your OnLeave logic here
+    end)
+
+    if showMinimap then
+        hbdp:AddMinimapIconMap(addon_name, minimapIcon, mapID, x, y, true, true)
+    end
+
+    -- Set up the icon for the world map
+    local worldMapIcon = CreateFrame("Button", nil, WorldMapFrame)
+    worldMapIcon:SetAllPoints(iconFrame)
+    worldMapIcon.icon = iconFrame
+    worldMapIcon:SetScript("OnEnter", function(self)
+        -- Add your OnEnter logic here
+    end)
+    worldMapIcon:SetScript("OnLeave", function(self)
+        -- Add your OnLeave logic here
+    end)
+
+    if showWorldMap then
+        hbdp:AddWorldMapIconMap(addon_name, worldMapIcon, mapID, x, y, HBD_PINS_WORLDMAP_SHOW_WORLD)
+    end
+
+    return iconFrame, minimapIcon, worldMapIcon
+end
+
 function PlaceMarkerOnMinimap(uiMapID, x, y, color, id)
     local icon = CreateFrame("Frame", nil, Minimap)
     icon:SetSize(12, 12)
@@ -169,17 +223,6 @@ function DecodeLoc(id)
     return x, y
 end
 
-function LoadMarkers()
-    for uiMapID, markers in pairs(HambrosiasSurveyHelperDB) do
-        for id, color in pairs(markers) do
-            local x, y = DecodeLoc(id)
-            PlaceMarkerOnMinimap(uiMapID, x, y, color, id)
-            PlaceMarkerOnWorldMap(uiMapID, x, y, color, id)
-        end
-    end
-    print("Loaded markers from saved data")
-end
-
 function ClearMarkers()
     local uiMapID = C_Map.GetBestMapForUnit("player")
     if HambrosiasSurveyHelperDB[uiMapID] then
@@ -213,6 +256,19 @@ function CreateOptionsMenu()
     clearButton:SetScript("OnClick", function()
         ClearMarkers()
     end)
+
+    local soundCheckbox = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
+    soundCheckbox:SetPoint("TOPLEFT", clearButton, "BOTTOMLEFT", 0, -10)
+    soundCheckbox:SetChecked(HambrosiasSurveyHelperDB.soundEnabled)
+    soundCheckbox:SetScript("OnClick", function(self)
+        HambrosiasSurveyHelperDB.soundEnabled = self:GetChecked()
+    end)
+
+    local soundCheckboxLabel = soundCheckbox:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    soundCheckboxLabel:SetPoint("LEFT", soundCheckbox, "RIGHT", 4, 0)
+    soundCheckboxLabel:SetText("Enable Sound")
+
+    InterfaceOptions_AddCategory(panel)
 
     InterfaceOptions_AddCategory(panel)
 end
