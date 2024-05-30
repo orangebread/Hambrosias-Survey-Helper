@@ -2,6 +2,7 @@ local addonName, addonTable = ...
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+frame:RegisterEvent("ARCHAEOLOGY_FIND_COMPLETE")
 
 local HBD = LibStub("HereBeDragons-2.0")
 local HBDPins = LibStub("HereBeDragons-Pins-2.0")
@@ -17,12 +18,21 @@ local HBD_PINS_WORLDMAP_SHOW_WORLD = 1
 -- SavedVariables
 HambrosiasSurveyHelperDB = HambrosiasSurveyHelperDB or {}
 
+-- Sound effect for artifact discovery
+local ARTIFACT_DISCOVERY_SOUND = [[Interface\AddOns\HambrosiasSurveyHelper\museum.mp3]]
+
 -- Initialization
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" and ... == addonName then
         LoadMarkers()
         CreateOptionsMenu()
         print("Hambrosia's Survey Helper Loaded")
+    elseif event == "ARCHAEOLOGY_FIND_COMPLETE" then
+        addonTable.colorSelectionFrame:Hide()
+        ClearMarkers()
+        ShowArtifactDiscoveredOverlay()
+        print("|cFFFFFF00Artifact discovered!|r")  -- Display bright yellow text
+        PlaySound(ARTIFACT_DISCOVERY_SOUND)  -- Play the sound effect
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         local unit, castGUID, spellID = ...
         if unit == "player" and spellID == SURVEY_SPELL_ID then
@@ -37,6 +47,24 @@ end)
 SLASH_CLEARMARKERS1 = '/clearmarkers'
 SlashCmdList['CLEARMARKERS'] = function()
     ClearMarkers()
+end
+
+function ShowArtifactDiscoveredOverlay()
+    if not artifactDiscoveredFrame then
+        artifactDiscoveredFrame = CreateFrame("Frame", nil, UIParent)
+        artifactDiscoveredFrame:SetPoint("CENTER")
+        artifactDiscoveredFrame:SetSize(500, 200)  -- Increased frame size
+
+        local text = artifactDiscoveredFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")  -- Larger font
+        text:SetPoint("CENTER", artifactDiscoveredFrame, "CENTER")
+        text:SetText("|cFFFFFF00Artifact Discovered!|r")  -- Brighter yellow color
+        artifactDiscoveredFrame.text = text
+    end
+
+    artifactDiscoveredFrame:Show()
+    C_Timer.After(5, function()  -- Display for 5 seconds
+        artifactDiscoveredFrame:Hide()
+    end)
 end
 
 function ShowColorSelectionUI()

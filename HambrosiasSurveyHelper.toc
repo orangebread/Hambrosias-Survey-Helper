@@ -1,6 +1,6 @@
 ## Interface: 100105
 ## Title: Hambrosia's Survey Helper
-## Notes: An addon to assist with triangulating the position of buried treasures
+## Notes: An addon to assist with triangulating the position of artifacts.
 ## Author: YourName
 ## Version: 1.0
 
